@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plugin
+    xmlns="http://www.phonegap.com/ns/plugins/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    id="cordova-plugin-esp-idf-provisioning"
+    version="1.0.0">
+
+    <name>ESP IDF provisioning</name>
+    <description>Wifi Provisioning for Espressif boards Plugin</description>
+    <license>Apache 2.0</license>
+    <keywords>esp, espressif, wifi, BLE, provisioning</keywords>
+
+    <repo>https://github.com/QuentinFarizon/cordova-plugin-esp-idf-provisioning.git</repo>
+    <issue>https://github.com/QuentinFarizon/cordova-plugin-esp-idf-provisioning/issues</issue>
+
+    <js-module src="www/provisioning.js" name="ESPIdfProvisioning">
+        <clobbers target="ESPIdfProvisioning" />
+    </js-module>
+
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="ESPIdfProvisioning">
+                <param name="ios-package" value="ESPIdfProvisioning"/>
+            </feature>
+        </config-file>
+        <source-file src="src/ios/ESPIdfProvisioning.swift" />
+
+        <!-- frameworks -->
+        <framework src="CoreBluetooth.framework" />
+        <podspec>
+            <config>
+                <source url="https://cdn.cocoapods.org/"/>
+            </config>
+            <pods use-frameworks="true">
+                <pod name="ESPProvision" spec="2.0.14"/>
+            </pods>
+        </podspec>
+
+        <hook type="before_plugin_install" src="hooks/ios_pod_extra_settings.js" />
+    </platform>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/widget">
+            <feature name="ESPIdfProvisioning">
+                <param name="android-package" value="com.boks.cordova.esp.idf.provisioning.ESPIdfProvisioningPlugin"/>
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/manifest">
+            <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+            <uses-permission android:name="android.permission.BLUETOOTH"/>
+            <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+        </config-file>
+
+        <framework src="src/android/esp-idf-provisioning.gradle" custom="true" type="gradleReference"/>
+
+        <framework src="com.github.espressif:esp-idf-provisioning-android:lib-2.0.11"/>
+
+        <source-file src="src/android/ESPIdfProvisioningPlugin.java" target-dir="src/com/boks/cordova/esp/idf/provisioning"/>
+        <source-file src="src/android/BleDevice.java" target-dir="src/com/boks/cordova/esp/idf/provisioning"/>
+        <source-file src="src/android/ESPIdfProvisioningPluginBleScanListener.java" target-dir="src/com/boks/cordova/esp/idf/provisioning"/>
+        <source-file src="src/android/EspIfProvisioningPluginProvisionListener.java" target-dir="src/com/boks/cordova/esp/idf/provisioning"/>
+
+    </platform>
+
+    <!-- because of <framework type="podspec"> for iOS -->
+    <engines>
+        <engine name="cordova" version=">=6.4.0"/>
+        <engine name="cordova-ios" version=">=4.3.0"/>
+    </engines>
+
+</plugin>

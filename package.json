@@ -1,0 +1,34 @@
+{
+  "name": "cordova-plugin-esp-idf-provisioning",
+  "version": "1.0.0",
+  "description": "Wifi Provisioning for Espressif boards Plugin",
+  "cordova": {
+    "id": "cordova-plugin-esp-idf-provisioning",
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuentinFarizon/cordova-plugin-esp-idf-provisioning.git"
+  },
+  "keywords": [
+    "cordova",
+    "bluetooth",
+    "ble",
+    "ecosystem:cordova",
+    "cordova-ios",
+    "cordova-android",
+    "esp",
+    "espressif",
+    "wifi",
+    "provisioning"
+  ],
+  "author": "Quentin Farizon <quentin.farizon@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/QuentinFarizon/cordova-plugin-esp-idf-provisioning/issues"
+  },
+  "homepage": "https://github.com/QuentinFarizon/cordova-plugin-esp-idf-provisioning#readme"
+}
