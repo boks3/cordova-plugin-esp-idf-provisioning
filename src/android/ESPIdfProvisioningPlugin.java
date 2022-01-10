@@ -128,9 +128,7 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
 
                 @Override
                 public void onWiFiScanFailed(Exception e) {
-                    PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT);
-                    result.setKeepCallback(true);
-                    callbackContext.sendPluginResult(result);
+                    callbackContext.error(e.toString());
                 }
             });
 
