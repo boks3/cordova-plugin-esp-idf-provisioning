@@ -30,10 +30,13 @@ import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.PluginResult;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.espressif.provisioning.DeviceConnectionEvent;
 import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPDevice;
 import com.espressif.provisioning.ESPProvisionManager;
@@ -56,11 +59,15 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
     Map<String, BleDevice> bleDevices = new LinkedHashMap<String, BleDevice>();
     Map<String, ESPDevice> espDevices = new LinkedHashMap<String, ESPDevice>();
     private ESPProvisionManager provisionManager;
+    String proofOfPossession;
+    ESPDevice espDevice;
+    private CallbackContext connectCallback;
 
     @Override
     protected void pluginInitialize() {
         super.pluginInitialize();
         provisionManager = ESPProvisionManager.getInstance(cordova.getActivity());
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -84,23 +91,12 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
         } else if (action.equals(CONNECT_BLE_DEVICE)) {
             String deviceName = args.getString(0);
             String primaryDeviceUuid = args.getString(1);
-            String proofOfPossession = args.getString(2);
+            proofOfPossession = args.getString(2);
             BleDevice bleDevice = bleDevices.get(deviceName);
-            ESPDevice espDevice = provisionManager.createESPDevice(TRANSPORT_BLE, SECURITY_1);
+            espDevice = provisionManager.createESPDevice(TRANSPORT_BLE, SECURITY_1);
             espDevice.connectBLEDevice(bleDevice.getBluetoothDevice(), primaryDeviceUuid);
-            espDevice.setProofOfPossession(proofOfPossession);
-            espDevices.put(espDevice.getDeviceName(), espDevice);
-
-            JSONObject json = new JSONObject();
-            try {
-                json.put("name", espDevice.getDeviceName());
-                json.put("primaryServiceUuid", espDevice.getPrimaryServiceUuid());
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            PluginResult result = new PluginResult(PluginResult.Status.OK, json);
-            result.setKeepCallback(true);
-            callbackContext.sendPluginResult(result);
+            connectCallback = callbackContext;
+            // Next steps are in onEvent method
 
         } else if (action.equals(SCAN_NETWORKS)) {
             String deviceName = args.getString(0);
@@ -144,5 +140,31 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
         }
 
         return validAction;
+    }
+
+    @Subscribe
+    public void onEvent(DeviceConnectionEvent event) {
+        switch (event.getEventType()) {
+            case ESPConstants.EVENT_DEVICE_CONNECTED:
+                espDevice.setProofOfPossession(proofOfPossession);
+                espDevices.put(espDevice.getDeviceName(), espDevice);
+
+                JSONObject json = new JSONObject();
+                try {
+                    json.put("name", espDevice.getDeviceName());
+                    json.put("primaryServiceUuid", espDevice.getPrimaryServiceUuid());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                PluginResult result = new PluginResult(PluginResult.Status.OK, json);
+                result.setKeepCallback(true);
+                connectCallback.sendPluginResult(result);
+                break;
+            case ESPConstants.EVENT_DEVICE_CONNECTION_FAILED:
+            case ESPConstants.EVENT_DEVICE_DISCONNECTED:
+                connectCallback.error("Failed to connect BLE device : device connection failed");
+                break;
+        }
     }
 }
