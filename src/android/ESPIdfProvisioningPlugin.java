@@ -53,14 +53,14 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
     private static final String SEARCH_ESP_DEVICES = "searchESPDevices";
     private static final String STOP_SEARCHING_ESP_DEVICES = "stopSearchingESPDevices";
     private static final String CONNECT_BLE_DEVICE = "connectBLEDevice";
+    private static final String DISCONNECT_BLE_DEVICE = "disconnectBLEDevice";
     private static final String SCAN_NETWORKS = "scanNetworks";
     private static final String PROVISION = "provision";
 
     Map<String, BleDevice> bleDevices = new LinkedHashMap<String, BleDevice>();
-    Map<String, ESPDevice> espDevices = new LinkedHashMap<String, ESPDevice>();
     private ESPProvisionManager provisionManager;
     String proofOfPossession;
-    ESPDevice espDevice;
+    ESPDevice espDevice = null;
     private CallbackContext connectCallback;
 
     @Override
@@ -100,40 +100,56 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
 
         } else if (action.equals(SCAN_NETWORKS)) {
             String deviceName = args.getString(0);
-            ESPDevice espDevice = espDevices.get(deviceName);
-            espDevice.scanNetworks(new WiFiScanListener() {
-                @Override
-                public void onWifiListReceived(ArrayList<WiFiAccessPoint> wifiList) {
-                    JSONArray jsonArray = new JSONArray();
+            if (espDevice == null) {
+                callbackContext.error("No device currently connected");
+            } else if (!deviceName.equals(espDevice.getDeviceName())) {
+                callbackContext.error("Device name not matching current connected ESP device");
+            } else {
+                espDevice.scanNetworks(new WiFiScanListener() {
+                    @Override
+                    public void onWifiListReceived(ArrayList<WiFiAccessPoint> wifiList) {
+                        JSONArray jsonArray = new JSONArray();
 
-                    for (WiFiAccessPoint wifi: wifiList) {
-                        JSONObject wifiJsonObject = new JSONObject();
-                        try {
-                            wifiJsonObject.put("ssid", wifi.getWifiName());
-                            wifiJsonObject.put("rssi", wifi.getRssi());
-                        } catch (JSONException e) {
-                            e.printStackTrace();
+                        for (WiFiAccessPoint wifi: wifiList) {
+                            JSONObject wifiJsonObject = new JSONObject();
+                            try {
+                                wifiJsonObject.put("ssid", wifi.getWifiName());
+                                wifiJsonObject.put("rssi", wifi.getRssi());
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            jsonArray.put(wifiJsonObject);
                         }
-                        jsonArray.put(wifiJsonObject);
+
+                        PluginResult result = new PluginResult(PluginResult.Status.OK, jsonArray);
+                        result.setKeepCallback(true);
+                        callbackContext.sendPluginResult(result);
                     }
 
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, jsonArray);
-                    result.setKeepCallback(true);
-                    callbackContext.sendPluginResult(result);
-                }
-
-                @Override
-                public void onWiFiScanFailed(Exception e) {
-                    callbackContext.error(e.toString());
-                }
-            });
+                    @Override
+                    public void onWiFiScanFailed(Exception e) {
+                        callbackContext.error(e.toString());
+                    }
+                });
+            }
 
         } else if (action.equals(PROVISION)) {
             String deviceName = args.getString(0);
             String ssid = args.getString(1);
             String passphrase = args.getString(2);
-            ESPDevice espDevice = espDevices.get(deviceName);
-            espDevice.provision(ssid, passphrase, new EspIfProvisioningPluginProvisionListener(callbackContext));
+            if (espDevice == null) {
+                callbackContext.error("No device currently connected");
+            } else if (!deviceName.equals(espDevice.getDeviceName())) {
+                callbackContext.error("Device name not matching current connected ESP device");
+            } else {
+                espDevice.provision(ssid, passphrase, new EspIfProvisioningPluginProvisionListener(callbackContext) {
+                    @Override
+                    public void deviceProvisioningSuccess() {
+                        super.deviceProvisioningSuccess();
+                        espDevice = null;
+                    }
+                });
+            }
 
         } else {
             validAction = false;
@@ -147,7 +163,6 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
         switch (event.getEventType()) {
             case ESPConstants.EVENT_DEVICE_CONNECTED:
                 espDevice.setProofOfPossession(proofOfPossession);
-                espDevices.put(espDevice.getDeviceName(), espDevice);
 
                 JSONObject json = new JSONObject();
                 try {
@@ -160,6 +175,7 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
                 PluginResult result = new PluginResult(PluginResult.Status.OK, json);
                 result.setKeepCallback(true);
                 connectCallback.sendPluginResult(result);
+
                 break;
             case ESPConstants.EVENT_DEVICE_CONNECTION_FAILED:
             case ESPConstants.EVENT_DEVICE_DISCONNECTED:
