@@ -64,7 +64,19 @@ class ESPIdfProvisioning : CDVPlugin, ESPDeviceConnectionDelegate {
         }
 
     }
-    
+
+    @objc func disconnectBLEDevice (_ command: CDVInvokedUrlCommand){
+        let deviceName = command.arguments[0] as! String
+        if let espDevice = self.espDevices[deviceName] {
+            espDevice.disconnect()
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_OK)
+            self.commandDelegate!.send(pluginResult, callbackId:command.callbackId)
+        } else {
+            let pluginResult = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Device not found")
+            self.commandDelegate!.send(pluginResult, callbackId:command.callbackId)
+        }
+    }
+
     @objc func scanNetworks (_ command: CDVInvokedUrlCommand) {
         let deviceName = command.arguments[0] as! String
         if let espDevice = self.espDevices[deviceName] {

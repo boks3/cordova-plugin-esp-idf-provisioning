@@ -15,6 +15,10 @@ module.exports = {
     cordova.exec(success, failure, 'ESPIdfProvisioning', 'connectBLEDevice', [espDeviceName, primaryServiceUuid, proofOfPossession]);
   },
 
+  disconnectBLEDevice: function (espDeviceName, success, failure) {
+    cordova.exec(success, failure, 'ESPIdfProvisioning', 'disconnectBLEDevice', [espDeviceName]);
+  },
+
   scanNetworks: function (espDeviceName, success, failure) {
     cordova.exec(success, failure, 'ESPIdfProvisioning', 'scanNetworks', [espDeviceName]);
   },

@@ -98,6 +98,20 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
             connectCallback = callbackContext;
             // Next steps are in onEvent method
 
+        } else if (action.equals(DISCONNECT_BLE_DEVICE)) {
+            String deviceName = args.getString(0);
+            if (espDevice == null) {
+                callbackContext.error("No device currently connected");
+            } else if (!deviceName.equals(espDevice.getDeviceName())) {
+                callbackContext.error("Device name not matching current connected ESP device");
+            } else {
+                espDevice.disconnectDevice();
+                espDevice = null;
+                PluginResult result = new PluginResult(PluginResult.Status.OK);
+                result.setKeepCallback(true);
+                callbackContext.sendPluginResult(result);
+            }
+
         } else if (action.equals(SCAN_NETWORKS)) {
             String deviceName = args.getString(0);
             if (espDevice == null) {
