@@ -93,10 +93,14 @@ public class ESPIdfProvisioningPlugin extends CordovaPlugin {
             String primaryDeviceUuid = args.getString(1);
             proofOfPossession = args.getString(2);
             BleDevice bleDevice = bleDevices.get(deviceName);
-            espDevice = provisionManager.createESPDevice(TRANSPORT_BLE, SECURITY_1);
-            espDevice.connectBLEDevice(bleDevice.getBluetoothDevice(), primaryDeviceUuid);
-            connectCallback = callbackContext;
-            // Next steps are in onEvent method
+            if (bleDevice != null) {
+                espDevice = provisionManager.createESPDevice(TRANSPORT_BLE, SECURITY_1);
+                espDevice.connectBLEDevice(bleDevice.getBluetoothDevice(), primaryDeviceUuid);
+                connectCallback = callbackContext;
+                // Next steps are in onEvent method
+            } else {
+                callbackContext.error("Cannot connect device not previously scanned");
+            }
 
         } else if (action.equals(DISCONNECT_BLE_DEVICE)) {
             String deviceName = args.getString(0);
