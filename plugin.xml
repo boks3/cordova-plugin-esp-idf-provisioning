@@ -54,7 +54,7 @@
 
         <framework src="src/android/esp-idf-provisioning.gradle" custom="true" type="gradleReference"/>
 
-        <framework src="com.github.espressif:esp-idf-provisioning-android:lib-2.0.11"/>
+        <framework src="com.github.espressif:esp-idf-provisioning-android:lib-2.0.13"/>
         <framework src="org.greenrobot:eventbus:3.2.0"/>
 
         <source-file src="src/android/ESPIdfProvisioningPlugin.java" target-dir="src/com/boks/cordova/esp/idf/provisioning"/>
